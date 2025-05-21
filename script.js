@@ -11,7 +11,8 @@ const API_KEY = process.env.API_KEY;
 
 app.get('/clima', async (req, res) => {
     const city = req.query.city || 'London';
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric&lang=pt_br`;
+    const encodedCity = encodeURIComponent(city);
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodedCity}&appid=${API_KEY}&units=metric&lang=pt_br`;
 
     try {
         const response = await axios.get(url);
