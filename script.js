@@ -1,10 +1,25 @@
 import express from 'express';
 import axios from 'axios';
 import cors from 'cors';
+import nodemailer from 'nodemailer';
 import 'dotenv/config';
 
 const app = express();
 app.use(cors());
+app.use(express.json());
+
+const transporter = nodemailer.createTransport({
+    host: "smtp.office365.com",
+    port: 587,
+    secure: false,
+    auth: {
+        user: process.env.USER_EMAIL,
+        pass: process.env.USER_PASS
+    },
+    tls: {
+        ciphers: 'SSLv3'
+    }
+})
 
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.API_KEY;
@@ -22,6 +37,44 @@ app.get('/clima', async (req, res) => {
         res.status(500).json({
             error: 'Erro ao buscar dados do clima. Verifique a cidade ou tente novamente mais tarde.'
         });
+    }
+});
+
+
+app.post('/verify-captcha', async (req, res) => {
+    const { token, name, email, message } = req.body;
+
+    if (!token) {
+        return res.status(400).json({ error: 'Token não fornecido' });
+    }
+
+    const secret = process.env.CAPTCHA_KEY;
+    const url = `https://www.google.com/recaptcha/api/siteverify?secret=${secret}&response=${token}`;
+
+    try {
+        const response = await axios.post(url);
+        const data = response.data;
+
+        if (data.success) {
+            res.json({ success: true });
+
+            if (data.score > 0.5) {
+                await transporter.sendMail({
+                    from: `"${name}" <${email}>`,
+                    to: process.env.USER_EMAIL,
+                    subject: 'Mensagem do site',
+                    text: message,
+                    html: `<p><strong>Nome:</strong> ${name}</p>
+                           <p><strong>Email:</strong> ${email}</p>
+                           <p><strong>Mensagem:</strong> ${message}</p>`
+                })
+            };
+
+        } else {
+            res.status(403).json({ success: false, error: 'reCAPTCHA inválido' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao verificar reCAPTCHA' });
     }
 });
 
