@@ -15,9 +15,6 @@ const transporter = nodemailer.createTransport({
     auth: {
         user: process.env.USER_EMAIL,
         pass: process.env.USER_PASS
-    },
-    tls: {
-        ciphers: 'SSLv3'
     }
 })
 
@@ -56,19 +53,22 @@ app.post('/verify-captcha', async (req, res) => {
         const data = response.data;
 
         if (data.success) {
-            res.json({ success: true });
-
-            if (data.score > 0.5) {
+            try {
                 await transporter.sendMail({
                     from: `"${name}" <${email}>`,
                     to: process.env.USER_EMAIL,
                     subject: 'Mensagem do site',
                     text: message,
                     html: `<p><strong>Nome:</strong> ${name}</p>
-                           <p><strong>Email:</strong> ${email}</p>
-                           <p><strong>Mensagem:</strong> ${message}</p>`
+                            <p><strong>Email:</strong> ${email}</p>
+                            <p><strong>Mensagem:</strong> ${message}</p>`
                 })
-            };
+
+                res.json({ success: true });
+            } catch (error) {
+                console.error('Erro ao enviar email:', error)
+                res.status(500).json({ error: 'Erro ao enviar email.'})
+            }
 
         } else {
             res.status(403).json({ success: false, error: 'reCAPTCHA inválido' });
