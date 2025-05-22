@@ -9,9 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.office365.com",
-    port: 587,
-    secure: false,
+    service: "outlook",
     auth: {
         user: process.env.USER_EMAIL,
         pass: process.env.USER_PASS
