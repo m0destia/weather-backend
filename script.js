@@ -6,7 +6,7 @@ import "dotenv/config";
 const app = express();
 app.use(
   cors({
-    origin: "https://weatherapp-1kaq.onrender.com/",
+    origin: "https://weatherapp-1kaq.onrender.com",
   })
 );
 app.use(express.json());
